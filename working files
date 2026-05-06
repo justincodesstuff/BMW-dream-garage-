@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMW Dream Garage</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Barlow+Condensed:wght@300;400;500;700&display=swap');
+
+:root {
+  --bmw-blue: #1C69D4;
+  --bmw-dark: #0A0A0A;
+  --bmw-silver: #C0C5CC;
+  --bmw-white: #F5F5F0;
+  --bmw-mid: #1A1A1F;
+  --bmw-accent: #4A90D9;
+  --grid: #ffffff08;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bmw-dark); color:var(--bmw-white); font-family:'Barlow Condensed',sans-serif; min-height:100vh; overflow-x:hidden; }
+body::before { content:''; position:fixed; inset:0; background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+body::after { content:''; position:fixed; top:-200px; right:-200px; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,#1C69D420 0%,transparent 70%); pointer-events:none; z-index:0; }
+
+/* Loading */
+#loadingOverlay { position:fixed; inset:0; background:var(--bmw-dark); z-index:200; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; transition:opacity 0.5s; }
+#loadingOverlay.hidden { opacity:0; pointer-events:none; }
+.loading-ring { width:48px; height:48px; border-radius:50%; border:2px solid #ffffff10; border-top-color:var(--bmw-blue); animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-size:10px; letter-spacing:0.4em; text-transform:uppercase; color:var(--bmw-silver); }
+
+/* Header */
+header { position:relative; z-index:10; padding:32px 48px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+.brand { display:flex; align-items:center; gap:20px; }
+.bmw-logo { width:56px; height:56px; border-radius:50%; border:2px solid var(--bmw-blue); display:flex; align-items:center; justify-content:center; background:var(--bmw-mid); flex-shrink:0; animation:pulse-ring 3s ease-in-out infinite; }
+@keyframes pulse-ring { 0%,100%{box-shadow:0 0 0 0 #1C69D430;} 50%{box-shadow:0 0 0 12px #1C69D400;} }
+.bmw-logo svg { width:36px; height:36px; }
+.brand-text h1 { font-size:11px; font-weight:500; letter-spacing:0.35em; text-transform:uppercase; color:var(--bmw-blue); margin-bottom:2px; }
+.brand-text h2 { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300; letter-spacing:0.05em; line-height:1; }
+.customer-panel { background:var(--bmw-mid); border:1px solid #ffffff15; border-radius:4px; padding:16px 24px; min-width:240px; }
+.customer-label { font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--bmw-silver); margin-bottom:6px; }
+.customer-name-input { background:transparent; border:none; outline:none; color:var(--bmw-white); font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:300; width:100%; border-bottom:1px solid #ffffff20; padding-bottom:4px; }
+.customer-name-input::placeholder { color:#ffffff30; font-style:italic; }
+
+/* Main */
+main { position:relative; z-index:10; padding:48px 48px 80px; }
+.section-label { font-size:9px; letter-spacing:0.4em; text-transform:uppercase; color:var(--bmw-blue); margin-bottom:24px; display:flex; align-items:center; gap:16px; }
+.section-label::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--bmw-blue),transparent); max-width:200px; }
+
+/* Tabs */
+.tab-switcher { display:flex; gap:2px; margin-bottom:36px; background:var(--bmw-mid); border:1px solid #ffffff10; padding:4px; width:fit-content; }
+.tab-btn { background:transparent; border:none; color:var(--bmw-silver); font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:500; letter-spacing:0.3em; text-transform:uppercase; padding:10px 28px; cursor:pointer; transition:all 0.2s; }
+.tab-btn.active { background:var(--bmw-blue); color:#fff; }
+.tab-btn:not(.active):hover { color:var(--bmw-white); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* Models grid */
+.models-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:2px; margin-bottom:40px; }
+.model-card { background:var(--bmw-mid); border:1px solid #ffffff10; padding:20px; cursor:pointer; transition:all 0.2s ease; position:relative; overflow:hidden; }
+.model-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,var(--bmw-blue),transparent); opacity:0; transition:opacity 0.2s; }
+.model-card:hover { border-color:#ffffff30; transform:translateY(-1px); }
+.model-card:hover::before { opacity:0.07; }
+.model-card.selected { border-color:var(--bmw-blue); }
+.model-card.selected::before { opacity:0.12; }
+.model-series { font-size:32px; font-weight:700; letter-spacing:-0.02em; line-height:1; margin-bottom:4px; position:relative; }
+.model-name { font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--bmw-silver); position:relative; }
+.model-selected-badge { position:absolute; top:12px; right:12px; width:20px; height:20px; border-radius:50%; background:var(--bmw-blue); display:none; align-items:center; justify-content:center; }
+.model-card.selected .model-selected-badge { display:flex; }
+.model-selected-badge svg { width:11px; height:11px; }
+
+/* Form */
+.wishlist-form { background:var(--bmw-mid); border:1px solid #ffffff10; padding:32px; margin-bottom:40px; }
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px; }
+@media(max-width:640px){.form-grid{grid-template-columns:1fr;}}
+.field { display:flex; flex-direction:column; gap:8px; }
+.field label { font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--bmw-silver); }
+.field select,.field input,.field textarea { background:#ffffff08; border:1px solid #ffffff15; color:var(--bmw-white); font-family:'Barlow Condensed',sans-serif; font-size:15px; padding:10px 14px; outline:none; transition:border-color 0.2s; -webkit-appearance:none; border-radius:2px; }
+.field select:focus,.field input:focus,.field textarea:focus { border-color:var(--bmw-blue); }
+.field select option { background:var(--bmw-mid); }
+.field textarea { resize:vertical; min-height:80px; }
+
+/* Swatches */
+.color-swatches { display:flex; gap:8px; flex-wrap:wrap; }
+.swatch { width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.15s; }
+.swatch:hover { transform:scale(1.15); }
+.swatch.active { border-color:var(--bmw-white); }
+.swatch-label { font-size:11px; color:var(--bmw-silver); letter-spacing:0.05em; margin-top:6px; min-height:14px; }
+
+/* Buttons */
+.priority-options,.cpo-toggle { display:flex; gap:8px; }
+.priority-btn,.cpo-btn { flex:1; background:#ffffff08; border:1px solid #ffffff15; color:var(--bmw-silver); font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; padding:10px; cursor:pointer; transition:all 0.15s; }
+.priority-btn:hover,.cpo-btn:hover { border-color:#ffffff30; color:var(--bmw-white); }
+.priority-btn.active-priority { border-color:var(--bmw-blue); color:var(--bmw-blue); background:#1C69D415; }
+.cpo-btn.active-cpo { border-color:#D4B840; color:#D4B840; background:#C0A03015; }
+.range-row { display:flex; gap:12px; align-items:center; }
+.range-row input { flex:1; }
+.range-sep { color:var(--bmw-silver); font-size:12px; }
+.add-btn { background:var(--bmw-blue); border:none; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:500; letter-spacing:0.3em; text-transform:uppercase; padding:14px 40px; cursor:pointer; transition:all 0.2s; clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%); }
+.add-btn:hover { background:var(--bmw-accent); transform:translateX(4px); }
+.add-btn:disabled { background:#333; cursor:not-allowed; transform:none; }
+
+/* Wish items */
+.wishlist-items { display:flex; flex-direction:column; gap:2px; }
+.wish-item { background:var(--bmw-mid); border:1px solid #ffffff10; padding:20px 24px; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:20px; animation:slideIn 0.3s ease; transition:border-color 0.2s; }
+.wish-item:hover { border-color:#ffffff20; }
+@keyframes slideIn { from{opacity:0;transform:translateX(-20px);} to{opacity:1;transform:translateX(0);} }
+.wish-number { font-size:11px; color:var(--bmw-blue); letter-spacing:0.1em; font-weight:700; min-width:28px; }
+.wish-model { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:400; margin-bottom:4px; }
+.wish-specs { font-size:11px; color:var(--bmw-silver); letter-spacing:0.08em; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.wish-notes-preview { font-size:11px; color:#ffffff40; font-style:italic; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:400px; }
+.wish-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.action-btn { background:transparent; border:1px solid #ffffff15; color:var(--bmw-silver); width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; border-radius:2px; flex-shrink:0; }
+.action-btn:hover { border-color:#ffffff40; color:var(--bmw-white); }
+.action-btn.delete:hover { border-color:#D4321C; color:#FF6B55; }
+.action-btn svg { width:14px; height:14px; }
+
+/* Badges */
+.preowned-badge,.new-badge,.wish-priority-tag { font-size:8px; letter-spacing:0.25em; text-transform:uppercase; padding:2px 7px; border-radius:2px; }
+.preowned-badge { background:#C0A03020; color:#D4B840; border:1px solid #C0A03040; }
+.new-badge { background:#1C69D420; color:var(--bmw-accent); border:1px solid #1C69D440; }
+.priority-high { background:#D4321C20; color:#FF6B55; border:1px solid #D4321C40; }
+.priority-medium { background:#D4901C20; color:#FFB655; border:1px solid #D4901C40; }
+.priority-low { background:#1C69D420; color:var(--bmw-accent); border:1px solid #1C69D440; }
+
+/* Empty state */
+.empty-state { text-align:center; padding:64px 32px; }
+.empty-icon { font-size:48px; margin-bottom:16px; }
+.empty-state p { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:300; color:#ffffff25; margin-bottom:8px; }
+.empty-state span { font-size:11px; letter-spacing:0.2em; text-transform:uppercase; color:#ffffff20; }
+
+/* Export bar */
+.export-bar { display:flex; align-items:center; justify-content:space-between; margin-top:40px; padding-top:32px; border-top:1px solid #ffffff10; flex-wrap:wrap; gap:16px; }
+.summary-stats { display:flex; gap:40px; }
+.stat { text-align:center; }
+.stat-value { font-family:'Cormorant Garamond',serif; font-size:36px; font-weight:300; line-height:1; }
+.stat-label { font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--bmw-silver); margin-top:4px; }
+.export-btn { background:transparent; border:1px solid var(--bmw-blue); color:var(--bmw-blue); font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:500; letter-spacing:0.3em; text-transform:uppercase; padding:12px 28px; cursor:pointer; transition:all 0.2s; }
+.export-btn:hover { background:var(--bmw-blue); color:#fff; }
+
+/* Toast */
+.toast { position:fixed; bottom:32px; right:32px; color:#fff; font-size:12px; letter-spacing:0.2em; text-transform:uppercase; padding:14px 24px; z-index:300; opacity:0; transform:translateY(16px); transition:all 0.3s; pointer-events:none; background:var(--bmw-blue); }
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.error { background:#7A1A1A; }
+.toast.success { background:#1A5C1A; }
+
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bmw-dark);} ::-webkit-scrollbar-thumb{background:var(--bmw-blue);}
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay">
+  <div class="loading-ring"></div>
+  <div class="loading-text">Loading Dream Garage</div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <div class="bmw-logo">
+      <svg viewBox="0 0 36 36" fill="none">
+        <circle cx="18" cy="18" r="17" stroke="#1C69D4" stroke-width="1.5"/>
+        <circle cx="18" cy="18" r="11" stroke="#1C69D4" stroke-width="1"/>
+        <path d="M18 7L18 18L7 18" fill="#1C69D4" opacity="0.9"/>
+        <path d="M18 18L29 18L29 29L18 18" fill="#C0C5CC" opacity="0.5"/>
+        <path d="M18 18L7 18L7 7L18 18" fill="#C0C5CC" opacity="0.5"/>
+        <path d="M18 7L29 7L29 18L18 7" fill="#1C69D4" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>BMW — Customer Wish List</h1>
+      <h2>Dream Garage</h2>
+    </div>
+  </div>
+  <div class="customer-panel">
+    <div class="customer-label">Customer Name</div>
+    <input class="customer-name-input" id="customerName" type="text" placeholder="Enter client name…">
+  </div>
+</header>
+
+<main>
+  <div class="tab-switcher">
+    <button class="tab-btn active" onclick="switchTab('new',this)">New Vehicle</button>
+    <button class="tab-btn" onclick="switchTab('preowned',this)">Pre-Owned</button>
+  </div>
+
+  <!-- NEW VEHICLE -->
+  <div class="tab-panel active" id="tab-new">
+    <div class="section-label">Select Series</div>
+    <div class="models-grid" id="modelsGrid"></div>
+    <div class="section-label">Configure Vehicle</div>
+    <div class="wishlist-form">
+      <div class="form-grid">
+        <div class="field"><label>Body Style</label>
+          <select id="bodyStyle"><option value="">— Select —</option><option>Sedan</option><option>Coupe</option><option>Convertible</option><option>SUV / SAV</option><option>Gran Coupe</option><option>Touring / Wagon</option><option>M Performance</option></select>
+        </div>
+        <div class="field"><label>Drivetrain</label>
+          <select id="drivetrain"><option value="">— Select —</option><option>xDrive (AWD)</option><option>RWD</option><option>Plug-In Hybrid (PHEV)</option><option>Full Electric (BEV)</option><option>M xDrive</option></select>
+        </div>
+        <div class="field"><label>Exterior Color</label>
+          <div class="color-swatches" id="colorSwatches"></div>
+          <div class="swatch-label" id="colorLabel">—</div>
+        </div>
+        <div class="field"><label>Interior</label>
+          <select id="interior"><option value="">— Select —</option><option>Black Merino Leather</option><option>Cognac Merino Leather</option><option>Ivory White Merino Leather</option><option>Mocha Merino Leather</option><option>Oyster Merino Leather</option><option>Tartufo Full Merino Leather</option><option>Sensatec (Synthetic)</option></select>
+        </div>
+        <div class="field"><label>Max Budget</label><input type="text" id="budget" placeholder="e.g. $85,000"></div>
+        <div class="field"><label>Timeline</label>
+          <select id="timeline"><option value="">— Select —</option><option>ASAP</option><option>Within 30 Days</option><option>1–3 Months</option><option>3–6 Months</option><option>Just Exploring</option></select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:20px;"><label>Priority</label>
+        <div class="priority-options">
+          <button class="priority-btn" onclick="setPriority('new','high',this)">High</button>
+          <button class="priority-btn active-priority" onclick="setPriority('new','medium',this)">Medium</button>
+          <button class="priority-btn" onclick="setPriority('new','low',this)">Low</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:24px;"><label>Customer Notes</label>
+        <textarea id="notes" placeholder="Key packages, specific options, trade-in info, customer remarks…"></textarea>
+      </div>
+      <button class="add-btn" id="addNewBtn" onclick="addNew()">+ Add to Wish List</button>
+    </div>
+  </div>
+
+  <!-- PRE-OWNED -->
+  <div class="tab-panel" id="tab-preowned">
+    <div class="section-label">Select Series</div>
+    <div class="models-grid" id="poModelsGrid"></div>
+    <div class="section-label">Pre-Owned Details</div>
+    <div class="wishlist-form">
+      <div class="form-grid">
+        <div class="field"><label>Year Range</label>
+          <div class="range-row">
+            <input type="text" id="poYearMin" placeholder="From (e.g. 2019)">
+            <span class="range-sep">—</span>
+            <input type="text" id="poYearMax" placeholder="To (e.g. 2023)">
+          </div>
+        </div>
+        <div class="field"><label>Max Mileage</label><input type="text" id="poMileage" placeholder="e.g. 30,000 mi"></div>
+        <div class="field"><label>Body Style</label>
+          <select id="poBodyStyle"><option value="">— Select —</option><option>Sedan</option><option>Coupe</option><option>Convertible</option><option>SUV / SAV</option><option>Gran Coupe</option><option>Touring / Wagon</option><option>M Performance</option></select>
+        </div>
+        <div class="field"><label>Drivetrain</label>
+          <select id="poDrivetrain"><option value="">— Select —</option><option>xDrive (AWD)</option><option>RWD</option><option>Plug-In Hybrid (PHEV)</option><option>Full Electric (BEV)</option><option>M xDrive</option></select>
+        </div>
+        <div class="field"><label>Preferred Color</label><input type="text" id="poColor" placeholder="e.g. Alpine White, Any"></div>
+        <div class="field"><label>Max Budget</label><input type="text" id="poBudget" placeholder="e.g. $45,000"></div>
+        <div class="field"><label>Stock # (if known)</label><input type="text" id="poStock" placeholder="e.g. P12345"></div>
+        <div class="field"><label>Timeline</label>
+          <select id="poTimeline"><option value="">— Select —</option><option>ASAP</option><option>Within 30 Days</option><option>1–3 Months</option><option>3–6 Months</option><option>Just Exploring</option></select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:20px;"><label>Certification Preference</label>
+        <div class="cpo-toggle">
+          <button class="cpo-btn active-cpo" onclick="setCPO('cpo',this)">CPO Only</button>
+          <button class="cpo-btn" onclick="setCPO('any',this)">Any Pre-Owned</button>
+          <button class="cpo-btn" onclick="setCPO('noncpo',this)">Non-CPO</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:20px;"><label>Priority</label>
+        <div class="priority-options">
+          <button class="priority-btn" onclick="setPriority('po','high',this)">High</button>
+          <button class="priority-btn active-priority" onclick="setPriority('po','medium',this)">Medium</button>
+          <button class="priority-btn" onclick="setPriority('po','low',this)">Low</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:24px;"><label>Customer Notes</label>
+        <textarea id="poNotes" placeholder="Key requirements, previous ownership, trade-in details…"></textarea>
+      </div>
+      <button class="add-btn" id="addPoBtn" onclick="addPreowned()">+ Add to Wish List</button>
+    </div>
+  </div>
+
+  <!-- WISH LIST -->
+  <div class="section-label" style="margin-top:8px;">Wish List</div>
+  <div class="wishlist-items" id="wishlistItems">
+    <div class="empty-state"><div class="empty-icon">○</div><p>No vehicles added yet</p><span>Select a series and configure above</span></div>
+  </div>
+
+  <div class="export-bar">
+    <div class="summary-stats">
+      <div class="stat"><div class="stat-value" id="totalCount">0</div><div class="stat-label">Vehicles</div></div>
+      <div class="stat"><div class="stat-value" id="preownedCount">0</div><div class="stat-label">Pre-Owned</div></div>
+      <div class="stat"><div class="stat-value" id="highPriCount">0</div><div class="stat-label">High Priority</div></div>
+    </div>
+    <button class="export-btn" onclick="exportPrint()">Print / PDF</button>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config & Storage ──
+let wishlist = [];
+
+function loadWishlist() {
+  try { const s = localStorage.getItem('bmw_wishlist'); if(s) wishlist = JSON.parse(s); } catch(e){}
+  renderWishlist(); hideLoading();
+}
+
+function saveWishlist() {
+  try { localStorage.setItem('bmw_wishlist', JSON.stringify(wishlist)); } catch(e){}
+}
+
+// ── Data ──
+const BMW_MODELS = [
+  {series:'1',name:'Series'},{series:'2',name:'Series'},{series:'3',name:'Series'},
+  {series:'4',name:'Series'},{series:'5',name:'Series'},{series:'7',name:'Series'},
+  {series:'8',name:'Series'},{series:'X1',name:'SAV'},{series:'X3',name:'SAV'},
+  {series:'X5',name:'SAV'},{series:'X7',name:'SAV'},{series:'M3',name:'M Performance'},
+  {series:'M4',name:'M Performance'},{series:'M8',name:'M Performance'},
+  {series:'iX',name:'Electric'},{series:'i4',name:'Electric'},
+];
+const COLORS = [
+  {name:'Alpine White',hex:'#F5F5F0',border:'#cccccc'},{name:'Black Sapphire',hex:'#1A1A2E'},
+  {name:'Mineral Grey',hex:'#7D8591'},{name:'Phytonic Blue',hex:'#2D4E7A'},
+  {name:'Tanzanite Blue',hex:'#1B3A6B'},{name:'San Remo Green',hex:'#2E4A3B'},
+  {name:'Skyscraper Grey',hex:'#4A4F57'},{name:'Portimao Blue',hex:'#0F2C5E'},
+  {name:'Fire Red',hex:'#8B1A1A'},{name:'Frozen Arctic Grey',hex:'#B8BFC7'},
+];
+
+let selectedModel=null, selectedPOModel=null, selectedColor=null;
+let selectedPriority='medium', selectedPOPriority='medium', selectedCPO='cpo';
+
+// ── Build grids ──
+function buildGrid(id, setter) {
+  const grid = document.getElementById(id);
+  BMW_MODELS.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'model-card';
+    card.innerHTML = `<div class="model-series">${m.series}</div><div class="model-name">${m.name}</div><div class="model-selected-badge"><svg viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg></div>`;
+    card.onclick = () => { grid.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected')); card.classList.add('selected'); setter(m.series); };
+    grid.appendChild(card);
+  });
+}
+buildGrid('modelsGrid', s => selectedModel=s);
+buildGrid('poModelsGrid', s => selectedPOModel=s);
+
+const sc = document.getElementById('colorSwatches');
+COLORS.forEach(c => {
+  const sw = document.createElement('div');
+  sw.className='swatch'; sw.style.background=c.hex;
+  if(c.border) sw.style.border=`2px solid ${c.border}`;
+  sw.title=c.name;
+  sw.onclick = () => { document.querySelectorAll('#colorSwatches .swatch').forEach(s=>s.classList.remove('active')); sw.classList.add('active'); selectedColor=c; document.getElementById('colorLabel').textContent=c.name; };
+  sc.appendChild(sw);
+});
+
+function switchTab(tab,btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active'); document.getElementById('tab-'+tab).classList.add('active');
+}
+function setPriority(scope,p,btn) {
+  if(scope==='new'){selectedPriority=p; document.querySelectorAll('#tab-new .priority-btn').forEach(b=>b.classList.remove('active-priority'));}
+  else{selectedPOPriority=p; document.querySelectorAll('#tab-preowned .priority-btn').forEach(b=>b.classList.remove('active-priority'));}
+  btn.classList.add('active-priority');
+}
+function setCPO(val,btn) { selectedCPO=val; document.querySelectorAll('.cpo-btn').forEach(b=>b.classList.remove('active-cpo')); btn.classList.add('active-cpo'); }
+
+// ── Add items ──
+function addNew() {
+  const btn=document.getElementById('addNewBtn');
+  if(!selectedModel){showToast('Please select a BMW series','error');return;}
+  const item = { id:Date.now().toString(), type:'new', model:selectedModel, body:document.getElementById('bodyStyle').value, drive:document.getElementById('drivetrain').value, interior:document.getElementById('interior').value, budget:document.getElementById('budget').value, timeline:document.getElementById('timeline').value, notes:document.getElementById('notes').value, color:selectedColor, priority:selectedPriority, customerName:document.getElementById('customerName').value };
+  wishlist.push(item); saveWishlist(); renderWishlist(); showToast('New vehicle added ✓','success');
+}
+
+function addPreowned() {
+  if(!selectedPOModel){showToast('Please select a BMW series','error');return;}
+  const item = { id:Date.now().toString(), type:'preowned', model:selectedPOModel, yearMin:document.getElementById('poYearMin').value, yearMax:document.getElementById('poYearMax').value, mileage:document.getElementById('poMileage').value, body:document.getElementById('poBodyStyle').value, drive:document.getElementById('poDrivetrain').value, color:document.getElementById('poColor').value, budget:document.getElementById('poBudget').value, stock:document.getElementById('poStock').value, timeline:document.getElementById('poTimeline').value, cpo:selectedCPO, notes:document.getElementById('poNotes').value, priority:selectedPOPriority, customerName:document.getElementById('customerName').value };
+  wishlist.push(item); saveWishlist(); renderWishlist(); showToast('Pre-owned added ✓','success');
+}
+
+// ── Render ──
+function renderWishlist() {
+  const c = document.getElementById('wishlistItems');
+  if(!wishlist.length) { c.innerHTML=`<div class="empty-state"><div class="empty-icon">○</div><p>No vehicles added yet</p><span>Select a series and configure above</span></div>`; }
+  else {
+    c.innerHTML = wishlist.map((item,i) => {
+      const badge = item.type==='preowned' ? `<span class="preowned-badge">Pre-Owned</span>` : `<span class="new-badge">New</span>`;
+      const colorDisplay = item.type==='new'&&item.color&&typeof item.color==='object'
+        ? `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${item.color.hex};border:1px solid #fff3;vertical-align:middle;margin-right:3px;"></span>${item.color.name}`
+        : (item.color||'');
+      const yr = (item.yearMin||item.yearMax) ? `${item.yearMin||'?'}–${item.yearMax||'?'}` : '';
+      const specs = item.type==='new'
+        ? [colorDisplay,item.drive,item.budget,item.timeline].filter(Boolean).join(' &nbsp;·&nbsp; ')
+        : [yr,item.mileage?`≤${item.mileage}`:'',item.drive,item.color,item.budget,item.stock?`#${item.stock}`:'',item.cpo,item.timeline].filter(Boolean).join(' · ');
+      return `<div class="wish-item" id="item-${item.id}">
+        <div class="wish-number">#${String(i+1).padStart(2,'0')}</div>
+        <div class="wish-details">
+          <div class="wish-model">BMW ${item.model} ${item.body||''} ${badge}</div>
+          <div class="wish-specs">${specs} <span class="wish-priority-tag priority-${item.priority}">${item.priority}</span></div>
+          ${item.notes?`<div class="wish-notes-preview">${item.notes}</div>`:''}
+        </div>
+        <div class="wish-actions">
+          <button class="action-btn delete" onclick="removeItem('${item.id}')">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('totalCount').textContent = wishlist.length;
+  document.getElementById('preownedCount').textContent = wishlist.filter(i=>i.type==='preowned').length;
+  document.getElementById('highPriCount').textContent = wishlist.filter(i=>i.priority==='high').length;
+}
+
+async function removeItem(id) {
+  wishlist = wishlist.filter(i=>i.id!==id);
+  saveWishlist(); renderWishlist();
+}
+
+function exportPrint() {
+  const name = document.getElementById('customerName').value||'Customer';
+  let html = `<html><head><title>BMW Wish List</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#111;}h1{font-size:22px;margin-bottom:4px;}.sub{font-size:12px;color:#666;margin-bottom:24px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{background:#1C69D4;color:#fff;padding:8px 10px;text-align:left;}td{padding:8px 10px;border-bottom:1px solid #eee;}tr:nth-child(even) td{background:#f8f8f8;}.po{color:#B8902A;font-weight:600;}.nw{color:#1C69D4;font-weight:600;}</style></head><body><h1>BMW Customer Wish List</h1><div class="sub">Customer: ${name} | ${new Date().toLocaleDateString()}</div><table><thead><tr><th>#</th><th>Type</th><th>Model</th><th>Details</th><th>Budget</th><th>Priority</th><th>Notes</th></tr></thead><tbody>`;
+  wishlist.forEach((item,i) => {
+    const type = item.type==='preowned'?'<span class="po">Pre-Owned</span>':'<span class="nw">New</span>';
+    const cn = item.type==='new'&&item.color&&typeof item.color==='object'?item.color.name:(item.color||'');
+    const details = item.type==='new'
+      ? [item.body,item.drive,cn,item.interior,item.timeline].filter(Boolean).join(' · ')
+      : [item.yearMin&&item.yearMax?`${item.yearMin}–${item.yearMax}`:'',item.mileage?`≤${item.mileage}`:'',item.body,item.drive,item.color,item.cpo,item.timeline].filter(Boolean).join(' · ');
+    html+=`<tr><td>${i+1}</td><td>${type}</td><td>BMW ${item.model} ${item.body||''}</td><td>${details}</td><td>${item.budget||'—'}</td><td>${item.priority}</td><td>${item.notes||'—'}</td></tr>`;
+  });
+  html+=`</tbody></table></body></html>`;
+  const w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();w.print();}
+  else showToast('Allow popups to print','error');
+}
+
+function showToast(msg,type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  setTimeout(()=>t.className='toast',2800);
+}
+function hideLoading() { document.getElementById('loadingOverlay').classList.add('hidden'); }
+
+loadWishlist();
+</script>
+</body>
+</html>
